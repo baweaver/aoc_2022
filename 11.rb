@@ -1,11 +1,9 @@
-$DEBUG = true
-
 module Day11
   class << self
     MONKEY_MATCH = / *Monkey (?<number>\d+):/
     ITEMS_MATCH = / *Starting items: (?<list>.*)/
     OPERATION_MATCH = / *Operation: (?<a>new) = (?<b>old) (?<operation>.) (?<target>\d+|old)/
-    CONDITION_MATCH = / *Test: (?<operation>divisible) by (?<n>\d+)/
+    CONDITION_MATCH = / *Test: (?<operation>divisible) by (?<divisor>\d+)/
     IF_MATCH = / *If (?<boolean>true|false): throw to monkey (?<monkey_number>\d+)/
 
     class Monkey
@@ -16,8 +14,8 @@ module Day11
         def call(current_worry) = current_worry.public_send(self.operation, actual_target(current_worry))
       end
 
-      Condition = Struct.new(:condition, :if_true, :if_false, keyword_init: true) do
-        def result(current_worry) = current_worry % condition == 0
+      Condition = Struct.new(:divisor, :if_true, :if_false, keyword_init: true) do
+        def result(current_worry) = current_worry % divisor == 0
         def call(current_worry) = result(current_worry) ? self.if_true : self.if_false
       end
 
@@ -64,7 +62,7 @@ module Day11
       end
 
       def set_condition(data)
-        @condition = Condition.new(condition: data[:n].to_i)
+        @condition = Condition.new(divisor: data[:divisor].to_i)
       end
 
       def set_condition_branch(data)
@@ -123,7 +121,7 @@ module Day11
     def part_two(input)
       monkeys = get_monkeys(input)
 
-      common_multiplier = monkeys.map { _1.condition.condition }.reduce(1, :lcm)
+      common_multiplier = monkeys.map { _1.condition.divisor }.reduce(1, :lcm)
 
       10_000.times do |i|
         monkeys.each do |monkey|
