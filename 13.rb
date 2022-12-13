@@ -3,44 +3,38 @@ module Day13
     Packet = Struct.new(:value) do
       include Comparable
 
-      def <=>(other)
-        Day13.compare(self.value, other.value)
-      end
-    end
+      def <=>(other) = compare(self.value, other.value)
 
-    def compare(left, right)
-      case [left, right]
-      in [Integer, Integer] then left <=> right
-      in [Integer, Array]   then compare([left], right)
-      in [Array, Integer]   then compare(left, [right])
-      in [Array, Array]
-        left.each_with_index do |left_item, i|
-          compare(left_item, right[i]).then { return _1 unless _1.zero? }
+      private def compare(a, b)
+        case [a, b]
+        in [Integer, Integer] then a <=> b
+        in [Integer, Array] | [Array, Integer] then compare(Array(a), Array(b))
+        in [Array, Array]
+          a.zip(b).each { |x, y| compare(x, y).then { return _1 if _1 != 0 } }
+          a.size <=> b.size
+        else
+          1
         end
-
-        left.size <=> right.size
-      else
-        1
       end
     end
+
+    DIVIDERS = [Packet.new([[2]]), Packet.new([[6]])]
 
     def part_one(input)
       input
         .each_slice(3)
-        .map { [eval(_1), eval(_2)] }
-        .filter_map.with_index(1) { |(a, b), i| i if compare(a, b) <= 0 }
+        .map { [Packet[eval(_1)], Packet[eval(_2)]] }
+        .filter_map.with_index(1) { |(a, b), i| i if a <= b }
         .sum
     end
 
     def part_two(input)
-      dividers = [Packet.new([[2]]), Packet.new([[6]])] => a, b
-
       input
         .reject(&:empty?)
         .map { Packet[eval(_1)] }
-        .concat(dividers)
+        .concat(DIVIDERS)
         .sort
-        .then { (_1.find_index(a) + 1) * (_1.find_index(b) + 1) }
+        .then { |vs| DIVIDERS.reduce(1) { _1 * vs.find_index(_2) } }
     end
   end
 end
